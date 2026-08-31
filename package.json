@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test:transaction": "tsx tests/transaction-validation.test.ts"
+    "test:transaction": "tsx tests/transaction-validation.test.ts",
+    "test": "tsx --test tests/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
