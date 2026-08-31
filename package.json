@@ -1,0 +1,15 @@
+{
+  "name": "noppay-chain",
+  "version": "0.1.0",
+  "description": "Noppay Chain a payment-focused Layer-1 blockchain project.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:transaction": "tsx tests/transaction-validation.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5.0.0"
+  }
+}
