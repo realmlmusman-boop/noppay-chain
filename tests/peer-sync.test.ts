@@ -12,3 +12,13 @@ test("nodes can prepare blockchain data for peer synchronization", () => {
   assert.ok(blocks.length >= 1);
   assert.equal(blocks[0]?.index, 0);
 });
+
+test("node exposes its blockchain for synchronization", () => {
+  const source = new Node();
+
+  const blocks = source.getBlocks();
+
+  assert.ok(blocks.length >= 1);
+  assert.equal(blocks[0]?.index, 0);
+  assert.equal(blocks[0]?.miner, "GENESIS");
+});
