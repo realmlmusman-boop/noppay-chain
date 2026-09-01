@@ -1,39 +1,61 @@
+import { server } from "../node/server.js";
 import { createWallet } from "../wallet/wallet.js";
 import { createTransaction } from "../core/transaction.js";
 
 async function main() {
   const sender = createWallet();
-  const receiver = createWallet();
+    const receiver = createWallet();
 
-  const tx = createTransaction(
-    sender,
-    receiver.address,
-    10n,
-    1n,
-  );
+      const mineResponse = await fetch("http://localhost:3000/mine", {
+          method: "POST",
+              headers: {
+                    "Content-Type": "application/json",
+                        },
+                            body: JSON.stringify({
+                                  minerAddress: sender.address,
+                                      }),
+                                        });
 
-  const response = await fetch(
-    "http://localhost:3000/transactions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(tx, (_, value) =>
-        typeof value === "bigint"
-          ? value.toString()
-          : value,
-      ),
-    },
-  );
+                                          console.log("Mining HTTP status:", mineResponse.status);
+                                            console.log(await mineResponse.text());
 
-  console.log("Sender:", sender.address);
-  console.log("Receiver:", receiver.address);
-  console.log("HTTP status:", response.status);
-  console.log(await response.text());
-}
+                                              if (!mineResponse.ok) {
+                                                  server.close();
+                                                      process.exitCode = 1;
+                                                          return;
+                                                            }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+                                                              const tx = createTransaction(
+                                                                  sender,
+                                                                      receiver.address,
+                                                                          10n,
+                                                                              1n,
+                                                                                );
+
+                                                                                  const response = await fetch("http://localhost:3000/transactions", {
+                                                                                      method: "POST",
+                                                                                          headers: {
+                                                                                                "Content-Type": "application/json",
+                                                                                                    },
+                                                                                                        body: JSON.stringify(tx, (_, value) =>
+                                                                                                              typeof value === "bigint" ? value.toString() : value,
+                                                                                                                  ),
+                                                                                                                    });
+
+                                                                                                                      console.log("Sender:", sender.address);
+                                                                                                                        console.log("Receiver:", receiver.address);
+                                                                                                                          console.log("HTTP status:", response.status);
+                                                                                                                            console.log(await response.text());
+
+                                                                                                                              server.close();
+
+                                                                                                                                if (!response.ok) {
+                                                                                                                                    process.exitCode = 1;
+                                                                                                                                      }
+                                                                                                                                      }
+
+                                                                                                                                      main().catch((error) => {
+                                                                                                                                        console.error(error);
+                                                                                                                                          server.close();
+                                                                                                                                            process.exit(1);
+                                                                                                                                            });
