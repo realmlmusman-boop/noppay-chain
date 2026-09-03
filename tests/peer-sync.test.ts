@@ -161,3 +161,48 @@ test("node can receive a message through its peer server", async () => {
 
   server.close();
 });
+
+
+test("node can synchronize blockchain through a peer message", async () => {
+  const source = new Node();
+  const target = new Node();
+
+  source.mine("miner-1");
+
+  const server = source.createPeerServer(3003, async (message) => {
+    if (message.type === "get-blocks") {
+      return {
+        type: "blocks",
+        data: source.getBlocks(),
+      };
+    }
+
+    return {
+      type: "error",
+    };
+  });
+
+  target.peerManager.addPeer("127.0.0.1", 3003);
+
+  const peer = target.peerManager.getPeers()[0];
+  assert.ok(peer);
+
+  const result = await peer.send({
+    type: "get-blocks",
+  });
+
+  assert.equal((result as { type: string }).type, "blocks");
+
+  const blocks = (result as {
+    type: string;
+    data: readonly import("../core/block-builder.js").Block[];
+  }).data;
+
+  const synchronized = target.synchronize(blocks);
+
+  assert.equal(synchronized, true);
+  assert.equal(target.getBlocks().length, 2);
+  assert.equal(target.isValid(), true);
+
+  server.close();
+});
