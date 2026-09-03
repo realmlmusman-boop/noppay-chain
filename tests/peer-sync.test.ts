@@ -206,3 +206,36 @@ test("node can synchronize blockchain through a peer message", async () => {
 
   server.close();
 });
+
+test("node can respond to a peer handshake message", async () => {
+  const node = new Node();
+
+  const server = node.createPeerServer(3004, async (message) => {
+    if (message.type === "handshake") {
+      return {
+        type: "handshake",
+        data: {
+          node: "noppay-node",
+        },
+      };
+    }
+
+    return {
+      type: "error",
+    };
+  });
+
+  const peer = node.peerManager.addPeer("127.0.0.1", 3004);
+
+  const result = await peer.send({
+    type: "handshake",
+  });
+
+  assert.equal((result as { type: string }).type, "handshake");
+  assert.deepEqual(
+    (result as { data: { node: string } }).data,
+    { node: "noppay-node" },
+  );
+
+  server.close();
+});
