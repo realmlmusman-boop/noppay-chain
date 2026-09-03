@@ -134,3 +134,30 @@ test("node can send a message to a managed peer", async () => {
 
   server.close();
 });
+
+
+test("node can receive a message through its peer server", async () => {
+  const node = new Node();
+  const server = node.createPeerServer(3002, async (message) => {
+    return {
+      type: "ack",
+      receivedType: message.type,
+    };
+  });
+
+  const peer = new (await import("../network/peer.js")).Peer(
+    "127.0.0.1",
+    3002,
+  );
+
+  const result = await peer.send({
+    type: "ping",
+  });
+
+  assert.deepEqual(result, {
+    type: "ack",
+    receivedType: "ping",
+  });
+
+  server.close();
+});
