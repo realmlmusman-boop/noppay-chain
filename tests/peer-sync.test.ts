@@ -1,7 +1,39 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createServer } from "node:net";
 
 import { Node } from "../node/node.js";
+
+async function getFreePort(): Promise<number> {
+  const server = createServer();
+
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => resolve());
+  });
+
+  const address = server.address();
+
+  if (address === null || typeof address === "string") {
+    server.close();
+    throw new Error("Could not determine free port");
+  }
+
+  const port = address.port;
+
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+
+  return port;
+}
+
 
 test("nodes can prepare blockchain data for peer synchronization", () => {
   const source = new Node();
@@ -177,7 +209,9 @@ test("node can synchronize blockchain through a peer message", async () => {
 
   source.mine("miner-1");
 
-  const server = source.createPeerServer(3006, async (message) => {
+  const port = await getFreePort();
+
+  const server = source.createPeerServer(port, async (message) => {
     if (message.type === "get-blocks") {
       return {
         type: "blocks",
@@ -190,7 +224,7 @@ test("node can synchronize blockchain through a peer message", async () => {
     };
   });
 
-  target.peerManager.addPeer("127.0.0.1", 3006);
+  target.peerManager.addPeer("127.0.0.1", port);
 
   const peer = target.peerManager.getPeers()[0];
   assert.ok(peer);

@@ -90,7 +90,20 @@ import { createPeerServer, type PeerServerHandler } from "../network/peer.js";
                                                                                                                                                                                           
   createPeerServer(
     port: number,
-    handler: PeerServerHandler,
+    handler: PeerServerHandler = (message) => {
+      if (message.type === "handshake") {
+        return {
+          type: "handshake",
+          data: {
+            node: this.nodeId,
+          },
+        };
+      }
+
+      return {
+        type: "error",
+      };
+    },
   ) {
     return createPeerServer(port, handler);
   }
