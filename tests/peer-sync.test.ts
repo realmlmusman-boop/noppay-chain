@@ -249,6 +249,49 @@ test("node can synchronize blockchain through a peer message", async () => {
   server.close();
 });
 
+test("node can initiate a peer handshake", async () => {
+  const source = new Node("source-node");
+  const target = new Node("target-node");
+
+  const server = target.createPeerServer(0);
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.once("listening", () => resolve());
+  });
+
+  const address = server.address();
+
+  if (address === null || typeof address === "string") {
+    server.close();
+    throw new Error("Could not determine peer server port");
+  }
+
+  const peer = source.peerManager.addPeer("127.0.0.1", address.port);
+
+  const result = await peer.send({
+    type: "handshake",
+    data: {
+      node: source.nodeId,
+    },
+  });
+
+  assert.equal((result as { type: string }).type, "handshake");
+  assert.deepEqual(
+    (result as { data: { node: string } }).data,
+    { node: target.nodeId },
+  );
+
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+});
+
 test("node can respond to a peer handshake message", async () => {
   const node = new Node();
 
