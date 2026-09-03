@@ -99,3 +99,38 @@ test("node rejects an invalid longer peer chain", () => {
   assert.equal(target.getBlocks().length, 1);
   assert.equal(target.isValid(), true);
 });
+
+
+test("node can send a message to a managed peer", async () => {
+  const source = new Node();
+  const target = new Node();
+
+  const server = source.createPeerServer(3001, async (message) => {
+    return {
+      received: message,
+    };
+  });
+
+  source.peerManager.addPeer("127.0.0.1", 3001);
+
+  const peer = source.peerManager.getPeers()[0];
+  assert.ok(peer);
+
+  const result = await peer.send({
+    type: "ping",
+    data: {
+      node: "source",
+    },
+  });
+
+  assert.deepEqual(result, {
+    received: {
+      type: "ping",
+      data: {
+        node: "source",
+      },
+    },
+  });
+
+  server.close();
+});

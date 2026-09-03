@@ -8,6 +8,7 @@ import {
     } from "../core/balance.js";
     import { Miner } from "../consensus/miner.js";
 import { PeerManager } from "../network/peer-manager.js";
+import { createPeerServer, type PeerServerHandler } from "../network/peer.js";
 
     export class Node {
       readonly blockchain: Blockchain;
@@ -84,4 +85,12 @@ import { PeerManager } from "../network/peer-manager.js";
   isValid(): boolean {
                                                                                                                                                                                         return this.blockchain.isValid();
                                                                                                                                                                                           }
-                                                                                                                                                                                          }
+                                                                                                                                                                                          
+  createPeerServer(
+    port: number,
+    handler: PeerServerHandler,
+  ) {
+    return createPeerServer(port, handler);
+  }
+
+}
