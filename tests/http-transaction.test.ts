@@ -1,8 +1,9 @@
-import { server } from "../node/server.js";
+import { startServer, stopServer } from "../node/server.js";
 import { createWallet } from "../wallet/wallet.js";
 import { createTransaction } from "../core/transaction.js";
 
 async function main() {
+  await startServer();
   const sender = createWallet();
     const receiver = createWallet();
 
@@ -20,7 +21,7 @@ async function main() {
                                             console.log(await mineResponse.text());
 
                                               if (!mineResponse.ok) {
-                                                  server.close();
+                                                  await stopServer();
                                                       process.exitCode = 1;
                                                           return;
                                                             }
@@ -47,15 +48,15 @@ async function main() {
                                                                                                                           console.log("HTTP status:", response.status);
                                                                                                                             console.log(await response.text());
 
-                                                                                                                              server.close();
+                                                                                                                              await stopServer();
 
                                                                                                                                 if (!response.ok) {
                                                                                                                                     process.exitCode = 1;
                                                                                                                                       }
                                                                                                                                       }
 
-                                                                                                                                      main().catch((error) => {
+                                                                                                                                      main().catch(async (error) => {
                                                                                                                                         console.error(error);
-                                                                                                                                          server.close();
+                                                                                                                                          await stopServer();
                                                                                                                                             process.exit(1);
                                                                                                                                             });

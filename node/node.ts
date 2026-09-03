@@ -63,7 +63,23 @@ import {
                                                                                                                                                                                 );
                                                                                                                                                                                   }
 
-                                                                                                                                                                                    isValid(): boolean {
+                                                                                                                                                                                    synchronize(blocks: readonly import("../core/block-builder.js").Block[]): boolean {
+    if (blocks.length <= this.blockchain.blocks.length) {
+      return false;
+    }
+
+    const candidate = new Blockchain();
+    candidate.replaceBlocks(blocks);
+
+    if (!candidate.isValid()) {
+      return false;
+    }
+
+    this.blockchain.replaceBlocks(blocks);
+    return true;
+  }
+
+  isValid(): boolean {
                                                                                                                                                                                         return this.blockchain.isValid();
                                                                                                                                                                                           }
                                                                                                                                                                                           }
