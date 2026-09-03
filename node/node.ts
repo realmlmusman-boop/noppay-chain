@@ -7,11 +7,13 @@ import {
     getBalance as calculateBalance,
     } from "../core/balance.js";
     import { Miner } from "../consensus/miner.js";
+import { PeerManager } from "../network/peer-manager.js";
 
     export class Node {
       readonly blockchain: Blockchain;
         readonly mempool: Mempool;
           readonly miner: Miner;
+  readonly peerManager = new PeerManager();
 
             constructor() {
                 this.blockchain = new Blockchain();
