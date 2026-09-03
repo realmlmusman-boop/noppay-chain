@@ -38,3 +38,64 @@ test("node accepts a valid longer chain from a peer", () => {
   assert.equal(target.getBlocks().length, 2);
   assert.equal(target.isValid(), true);
 });
+
+test("node rejects a shorter peer chain", () => {
+  const source = new Node();
+  const target = new Node();
+
+  source.mine("miner-1");
+
+  const longerChain = source.getBlocks();
+  const shorterChain = longerChain.slice(0, 1);
+
+  const synchronized = target.synchronize(shorterChain);
+
+  assert.equal(synchronized, false);
+  assert.equal(target.getBlocks().length, 1);
+  assert.equal(target.isValid(), true);
+});
+
+test("node rejects a same-length peer chain", () => {
+  const source = new Node();
+  const target = new Node();
+
+  source.mine("miner-1");
+  target.mine("miner-2");
+
+  const sourceBlocks = source.getBlocks();
+  const targetBlocks = target.getBlocks();
+
+  assert.equal(sourceBlocks.length, 2);
+  assert.equal(targetBlocks.length, 2);
+
+  const synchronized = target.synchronize(sourceBlocks);
+
+  assert.equal(synchronized, false);
+  assert.equal(target.getBlocks().length, 2);
+  assert.equal(target.isValid(), true);
+});
+
+test("node rejects an invalid longer peer chain", () => {
+  const source = new Node();
+  const target = new Node();
+
+  source.mine("miner-1");
+  source.mine("miner-1");
+
+  const sourceBlocks = source.getBlocks();
+  const invalidBlocks = sourceBlocks.map((block) => ({ ...block }));
+
+  invalidBlocks[1] = {
+    ...invalidBlocks[1],
+    hash: "INVALID",
+  };
+
+  assert.equal(invalidBlocks.length, 3);
+  assert.equal(target.getBlocks().length, 1);
+
+  const synchronized = target.synchronize(invalidBlocks);
+
+  assert.equal(synchronized, false);
+  assert.equal(target.getBlocks().length, 1);
+  assert.equal(target.isValid(), true);
+});
