@@ -11,12 +11,14 @@ import { PeerManager } from "../network/peer-manager.js";
 import { createPeerServer, type PeerServerHandler } from "../network/peer.js";
 
     export class Node {
+  readonly nodeId: string;
       readonly blockchain: Blockchain;
         readonly mempool: Mempool;
           readonly miner: Miner;
   readonly peerManager = new PeerManager();
 
-            constructor() {
+            constructor(nodeId = "noppay-node") {
+    this.nodeId = nodeId;
                 this.blockchain = new Blockchain();
                     this.mempool = new Mempool();
                         this.miner = new Miner(

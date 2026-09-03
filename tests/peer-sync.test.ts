@@ -132,7 +132,15 @@ test("node can send a message to a managed peer", async () => {
     },
   });
 
-  server.close();
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
 });
 
 
@@ -169,7 +177,7 @@ test("node can synchronize blockchain through a peer message", async () => {
 
   source.mine("miner-1");
 
-  const server = source.createPeerServer(3003, async (message) => {
+  const server = source.createPeerServer(3006, async (message) => {
     if (message.type === "get-blocks") {
       return {
         type: "blocks",
@@ -182,7 +190,7 @@ test("node can synchronize blockchain through a peer message", async () => {
     };
   });
 
-  target.peerManager.addPeer("127.0.0.1", 3003);
+  target.peerManager.addPeer("127.0.0.1", 3006);
 
   const peer = target.peerManager.getPeers()[0];
   assert.ok(peer);
