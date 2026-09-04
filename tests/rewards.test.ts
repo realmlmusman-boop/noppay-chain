@@ -5,21 +5,21 @@ import {
       calculateMinerReward,
       } from "../consensus/rewards.js";
 
-      assert.equal(BLOCK_REWARD, 50n);
+      assert.equal(BLOCK_REWARD, 5n);
 
       assert.equal(
         calculateBlockReward(),
-          50n,
+          5n,
           );
 
           assert.equal(
             calculateMinerReward(0n),
-              50n,
+              5n,
               );
 
               assert.equal(
                 calculateMinerReward(5n),
-                  55n,
+                  5n,
                   );
 
                   assert.throws(

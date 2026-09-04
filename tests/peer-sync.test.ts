@@ -1,227 +1,225 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:net";
-
 import { Node } from "../node/node.js";
 
 async function getFreePort(): Promise<number> {
-  const server = createServer();
+const server = createServer();
 
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => resolve());
-  });
+await new Promise<void>((resolve, reject) => {
+server.once("error", reject);
+server.listen(0, "127.0.0.1", () => resolve());
+});
 
-  const address = server.address();
+const address = server.address();
 
-  if (address === null || typeof address === "string") {
-    server.close();
-    throw new Error("Could not determine free port");
-  }
-
-  const port = address.port;
-
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-
-  return port;
+if (address === null || typeof address === "string") {
+server.close();
+throw new Error("Could not determine free port");
 }
 
+const port = address.port;
+
+await new Promise<void>((resolve, reject) => {
+server.close((error) => {
+if (error) {
+reject(error);
+return;
+}
+resolve();
+});
+});
+
+return port;
+}
 
 test("nodes can prepare blockchain data for peer synchronization", () => {
-  const source = new Node();
-  const blocks = source.getBlocks();
+const source = new Node();
+const blocks = source.getBlocks();
 
-  assert.ok(Array.isArray(blocks));
-  assert.ok(blocks.length >= 1);
-  assert.equal(blocks[0]?.index, 0);
+assert.ok(Array.isArray(blocks));
+assert.ok(blocks.length >= 1);
+assert.equal(blocks[0]?.index, 0);
 });
 
 test("node exposes its blockchain for synchronization", () => {
-  const source = new Node();
-  const blocks = source.getBlocks();
+const source = new Node();
+const blocks = source.getBlocks();
 
-  assert.ok(blocks.length >= 1);
-  assert.equal(blocks[0]?.index, 0);
-  assert.equal(blocks[0]?.miner, "GENESIS");
+assert.ok(blocks.length >= 1);
+assert.equal(blocks[0]?.index, 0);
+assert.equal(blocks[0]?.miner, "GENESIS");
 });
 
 test("node accepts a valid longer chain from a peer", () => {
-  const source = new Node();
-  const target = new Node();
+const source = new Node();
+const target = new Node();
 
-  source.mine("miner-1");
+source.mine("miner-1");
 
-  const sourceBlocks = source.getBlocks();
+const sourceBlocks = source.getBlocks();
 
-  assert.equal(sourceBlocks.length, 2);
-  assert.equal(target.getBlocks().length, 1);
+assert.equal(sourceBlocks.length, 2);
+assert.equal(target.getBlocks().length, 1);
 
-  const synchronized = target.synchronize(sourceBlocks);
+const synchronized = target.synchronize(sourceBlocks);
 
-  assert.equal(synchronized, true);
-  assert.equal(target.getBlocks().length, 2);
-  assert.equal(target.isValid(), true);
+assert.equal(synchronized, true);
+assert.equal(target.getBlocks().length, 2);
+assert.equal(target.isValid(), true);
 });
 
 test("node rejects a shorter peer chain", () => {
-  const source = new Node();
-  const target = new Node();
+const source = new Node();
+const target = new Node();
 
-  source.mine("miner-1");
+source.mine("miner-1");
 
-  const longerChain = source.getBlocks();
-  const shorterChain = longerChain.slice(0, 1);
+const longerChain = source.getBlocks();
+const shorterChain = longerChain.slice(0, 1);
 
-  const synchronized = target.synchronize(shorterChain);
+const synchronized = target.synchronize(shorterChain);
 
-  assert.equal(synchronized, false);
-  assert.equal(target.getBlocks().length, 1);
-  assert.equal(target.isValid(), true);
+assert.equal(synchronized, false);
+assert.equal(target.getBlocks().length, 1);
+assert.equal(target.isValid(), true);
 });
 
 test("node rejects a same-length peer chain", () => {
-  const source = new Node();
-  const target = new Node();
+const source = new Node();
+const target = new Node();
 
-  source.mine("miner-1");
-  target.mine("miner-2");
+source.mine("miner-1");
+target.mine("miner-2");
 
-  const sourceBlocks = source.getBlocks();
-  const targetBlocks = target.getBlocks();
+const sourceBlocks = source.getBlocks();
+const targetBlocks = target.getBlocks();
 
-  assert.equal(sourceBlocks.length, 2);
-  assert.equal(targetBlocks.length, 2);
+assert.equal(sourceBlocks.length, 2);
+assert.equal(targetBlocks.length, 2);
 
-  const synchronized = target.synchronize(sourceBlocks);
+const synchronized = target.synchronize(sourceBlocks);
 
-  assert.equal(synchronized, false);
-  assert.equal(target.getBlocks().length, 2);
-  assert.equal(target.isValid(), true);
+assert.equal(synchronized, false);
+assert.equal(target.getBlocks().length, 2);
+assert.equal(target.isValid(), true);
 });
 
 test("node rejects an invalid longer peer chain", () => {
-  const source = new Node();
-  const target = new Node();
+const source = new Node();
+const target = new Node();
 
-  source.mine("miner-1");
-  source.mine("miner-1");
+source.mine("miner-1");
+source.mine("miner-2");
 
-  const sourceBlocks = source.getBlocks();
-  const invalidBlocks = sourceBlocks.map((block) => ({ ...block }));
+const sourceBlocks = source.getBlocks();
 
-  invalidBlocks[1] = {
-    ...invalidBlocks[1],
-    hash: "INVALID",
-  };
+const invalidBlocks = sourceBlocks.map((block) => ({ ...block }));
 
-  assert.equal(invalidBlocks.length, 3);
-  assert.equal(target.getBlocks().length, 1);
+invalidBlocks[1] = {
+...invalidBlocks[1],
+hash: "INVALID",
+};
 
-  const synchronized = target.synchronize(invalidBlocks);
+assert.equal(invalidBlocks.length, 3);
+assert.equal(target.getBlocks().length, 1);
 
-  assert.equal(synchronized, false);
-  assert.equal(target.getBlocks().length, 1);
-  assert.equal(target.isValid(), true);
+const synchronized = target.synchronize(invalidBlocks);
+
+assert.equal(synchronized, false);
+assert.equal(target.getBlocks().length, 1);
+assert.equal(target.isValid(), true);
 });
-
 
 test("node can send a message to a managed peer", async () => {
-  const source = new Node();
-  const target = new Node();
+const source = new Node();
+const target = new Node();
 
-  const server = source.createPeerServer(3001, async (message) => {
-    return {
-      received: message,
-    };
-  });
-
-  source.peerManager.addPeer("127.0.0.1", 3001);
-
-  const peer = source.peerManager.getPeers()[0];
-  assert.ok(peer);
-
-  const result = await peer.send({
-    type: "ping",
-    data: {
-      node: "source",
-    },
-  });
-
-  assert.deepEqual(result, {
-    received: {
-      type: "ping",
-      data: {
-        node: "source",
-      },
-    },
-  });
-
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
+const server = source.createPeerServer(3001, async (message) => {
+return {
+received: message,
+};
 });
 
+source.peerManager.addPeer("127.0.0.1", 3001);
+
+const peer = source.peerManager.getPeers()[0];
+assert.ok(peer);
+
+const result = await peer.send({
+type: "ping",
+data: {
+node: "source",
+},
+});
+
+assert.deepEqual(result, {
+received: {
+type: "ping",
+data: {
+node: "source",
+},
+},
+});
+
+await new Promise<void>((resolve, reject) => {
+server.close((error) => {
+if (error) {
+reject(error);
+return;
+}
+resolve();
+});
+});
+});
 
 test("node can receive a message through its peer server", async () => {
-  const node = new Node();
-  const server = node.createPeerServer(3002, async (message) => {
-    return {
-      type: "ack",
-      receivedType: message.type,
-    };
-  });
+const node = new Node();
 
-  const peer = new (await import("../network/peer.js")).Peer(
-    "127.0.0.1",
-    3002,
-  );
-
-  const result = await peer.send({
-    type: "ping",
-  });
-
-  assert.deepEqual(result, {
-    type: "ack",
-    receivedType: "ping",
-  });
-
-  server.close();
+const server = node.createPeerServer(3002, async (message) => {
+return {
+type: "ack",
+receivedType: message.type,
+};
 });
 
+const peer = new (await import("../network/peer.js")).Peer(
+"127.0.0.1",
+3002,
+);
+
+const result = await peer.send({
+type: "ping",
+});
+
+assert.deepEqual(result, {
+type: "ack",
+receivedType: "ping",
+});
+
+server.close();
+});
 
 test("node can synchronize blockchain through a peer message", async () => {
-  const source = new Node();
-  const target = new Node();
+const source = new Node();
+const target = new Node();
 
-  source.mine("miner-1");
+source.mine("miner-1");
 
-  const port = await getFreePort();
+const port = await getFreePort();
 
-  const server = source.createPeerServer(port, async (message) => {
-    if (message.type === "get-blocks") {
-      return {
-        type: "blocks",
-        data: source.getBlocks(),
-      };
-    }
+const server = source.createPeerServer(port, async (message) => {
+if (message.type === "get-blocks") {
+return {
+type: "blocks",
+data: source.getBlocks(),
+};
+}
 
-    return {
-      type: "error",
-    };
+return {
+  type: "error",
+  };
+
   });
 
   target.peerManager.addPeer("127.0.0.1", port);
@@ -230,15 +228,17 @@ test("node can synchronize blockchain through a peer message", async () => {
   assert.ok(peer);
 
   const result = await peer.send({
-    type: "get-blocks",
+  type: "get-blocks",
   });
 
   assert.equal((result as { type: string }).type, "blocks");
 
-  const blocks = (result as {
-    type: string;
-    data: readonly import("../core/block-builder.js").Block[];
-  }).data;
+  const blocks = (
+  result as {
+  type: string;
+  data: readonly import("../core/block-builder.js").Block[];
+  }
+  ).data;
 
   const synchronized = target.synchronize(blocks);
 
@@ -247,80 +247,88 @@ test("node can synchronize blockchain through a peer message", async () => {
   assert.equal(target.isValid(), true);
 
   server.close();
-});
+  });
 
-test("node can initiate a peer handshake", async () => {
+  test("node can initiate a peer handshake", async () => {
   const source = new Node("source-node");
   const target = new Node("target-node");
 
   const server = target.createPeerServer(0);
+
   await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.once("listening", () => resolve());
+  server.once("error", reject);
+  server.once("listening", () => resolve());
   });
 
   const address = server.address();
 
   if (address === null || typeof address === "string") {
-    server.close();
-    throw new Error("Could not determine peer server port");
+  server.close();
+  throw new Error("Could not determine peer server port");
   }
 
   const peer = source.peerManager.addPeer("127.0.0.1", address.port);
 
   const result = await peer.send({
-    type: "handshake",
-    data: {
-      node: source.nodeId,
-    },
+  type: "handshake",
+  data: {
+  node: source.nodeId,
+  },
   });
 
   assert.equal((result as { type: string }).type, "handshake");
+
   assert.deepEqual(
-    (result as { data: { node: string } }).data,
-    { node: target.nodeId },
+  (result as { data: { node: string } }).data,
+  {
+  node: target.nodeId,
+  },
   );
 
   await new Promise<void>((resolve, reject) => {
-    server.close((error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
+  server.close((error) => {
+  if (error) {
+  reject(error);
+  return;
+  }
+  resolve();
   });
-});
+  });
+  });
 
-test("node can respond to a peer handshake message", async () => {
+  test("node can respond to a peer handshake message", async () => {
   const node = new Node();
 
   const server = node.createPeerServer(3004, async (message) => {
-    if (message.type === "handshake") {
-      return {
-        type: "handshake",
-        data: {
-          node: "noppay-node",
-        },
-      };
-    }
+  if (message.type === "handshake") {
+  return {
+  type: "handshake",
+  data: {
+  node: "noppay-node",
+  },
+  };
+  }
 
-    return {
-      type: "error",
+  return {
+    type: "error",
     };
-  });
 
-  const peer = node.peerManager.addPeer("127.0.0.1", 3004);
+    });
 
-  const result = await peer.send({
+    const peer = node.peerManager.addPeer("127.0.0.1", 3004);
+
+    const result = await peer.send({
     type: "handshake",
-  });
+    });
 
-  assert.equal((result as { type: string }).type, "handshake");
-  assert.deepEqual(
+    assert.equal((result as { type: string }).type, "handshake");
+
+    assert.deepEqual(
     (result as { data: { node: string } }).data,
-    { node: "noppay-node" },
-  );
+    {
+    node: "noppay-node",
+    },
+    );
 
-  server.close();
-});
+    server.close();
+    });

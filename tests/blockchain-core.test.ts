@@ -26,7 +26,7 @@ const transaction = createTransaction(
             assert.equal(block.previousHash, "GENESIS");
             assert.equal(block.transactions.length, 1);
             assert.equal(block.miner, miner.address);
-            assert.equal(block.reward, 52n);
+            assert.equal(block.reward, 5n);
 
             assert.equal(blockchain.latestBlock.hash, block.hash);
             assert.equal(blockchain.isValid(), true);

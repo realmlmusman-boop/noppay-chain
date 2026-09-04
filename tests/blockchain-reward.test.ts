@@ -16,7 +16,7 @@ const result = calculateBlockMinerReward(
 
         assert.equal(
           result.reward,
-            55n,
+            5n,
             );
 
             console.log("Blockchain miner reward test passed.");

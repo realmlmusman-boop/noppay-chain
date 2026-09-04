@@ -1,4 +1,4 @@
-export const BLOCK_REWARD = 50n;
+export const BLOCK_REWARD = 5n;
 
 export function calculateBlockReward(): bigint {
   return BLOCK_REWARD;
@@ -11,5 +11,5 @@ export function calculateBlockReward(): bigint {
           throw new Error("Transaction fees cannot be negative");
             }
 
-              return BLOCK_REWARD + transactionFees;
+              return BLOCK_REWARD;
               }
