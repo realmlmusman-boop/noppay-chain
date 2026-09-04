@@ -9,6 +9,75 @@ export type PeerMessage = {
   data?: unknown;
 };
 
+function deserializePeerResponse(value: unknown): unknown {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("type" in value)
+  ) {
+    return value;
+  }
+
+  const message = value as {
+    type: string;
+    data?: unknown;
+  };
+
+  if (message.type !== "blocks" || !Array.isArray(message.data)) {
+    return value;
+  }
+
+  const blocks = message.data.map((block) => {
+    if (
+      typeof block !== "object" ||
+      block === null
+    ) {
+      return block;
+    }
+
+    const rawBlock = block as Record<string, unknown>;
+
+    const transactions = Array.isArray(rawBlock.transactions)
+      ? rawBlock.transactions.map((transaction) => {
+          if (
+            typeof transaction !== "object" ||
+            transaction === null
+          ) {
+            return transaction;
+          }
+
+          const rawTransaction = transaction as Record<string, unknown>;
+
+          return {
+            ...rawTransaction,
+            amount:
+              typeof rawTransaction.amount === "string"
+                ? BigInt(rawTransaction.amount)
+                : rawTransaction.amount,
+            fee:
+              typeof rawTransaction.fee === "string"
+                ? BigInt(rawTransaction.fee)
+                : rawTransaction.fee,
+          };
+        })
+      : rawBlock.transactions;
+
+    return {
+      ...rawBlock,
+      reward:
+        typeof rawBlock.reward === "string"
+          ? BigInt(rawBlock.reward)
+          : rawBlock.reward,
+      transactions,
+    };
+  });
+
+  return {
+    ...message,
+    data: blocks,
+  };
+}
+
 export class Peer {
   readonly host: string;
   readonly port: number;
@@ -37,7 +106,7 @@ export class Peer {
 
     if (text.trim().length > 0) {
       try {
-        parsed = JSON.parse(text);
+        parsed = deserializePeerResponse(JSON.parse(text));
       } catch {
         parsed = text;
       }
@@ -125,7 +194,11 @@ export function createPeerServer(
         );
 
         response.statusCode = 200;
-        response.end(JSON.stringify(result));
+        response.end(
+          JSON.stringify(result, (_key, value) =>
+            typeof value === "bigint" ? value.toString() : value,
+          ),
+        );
       } catch {
         response.statusCode = 500;
         response.end(
