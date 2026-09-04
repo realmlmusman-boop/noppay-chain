@@ -7,3 +7,4 @@ export function createNewWallet(): Wallet {
 export function isValidWalletAddress(address: string): boolean {
   return address.startsWith("NPP") && address.length === 27;
 }
+
